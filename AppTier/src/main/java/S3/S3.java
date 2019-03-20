@@ -16,36 +16,42 @@ import java.io.*;
 public class S3 {
 
 	static AmazonS3 s3;
-	public S3()
-	{
-		s3= getS3object();
+	
+	public S3() {
+        this.s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.US_WEST_1).build();
+		
 	}
 	
-	public AmazonS3 getS3object()
-	{
-		 AWSCredentials credentials = null;
-	        try {
-	            credentials = new ProfileCredentialsProvider("default").getCredentials();
-	        } catch (Exception e) {
-	            throw new AmazonClientException(
-	                    "Cannot load the credentials from the credential profiles file. " +
-	                    "Please make sure that your credentials file is at the correct " +
-	                    "location (/home/kunal/.aws/credentials), and is in valid format.",
-	                    e);
-	        }
-
-	        AmazonS3 s3 = AmazonS3ClientBuilder.standard()
-	            .withCredentials(new AWSStaticCredentialsProvider(credentials))
-	            .withRegion("us-west-1")
-	            .build();
-        
-		return s3;
-	}
+//	public S3()
+//	{
+//		s3= getS3object();
+//	}
+	
+//	public AmazonS3 getS3object()
+//	{
+//		 AWSCredentials credentials = null;
+//	        try {
+//	            credentials = new ProfileCredentialsProvider("default").getCredentials();
+//	        } catch (Exception e) {
+//	            throw new AmazonClientException(
+//	                    "Cannot load the credentials from the credential profiles file. " +
+//	                    "Please make sure that your credentials file is at the correct " +
+//	                    "location (/home/kunal/.aws/credentials), and is in valid format.",
+//	                    e);
+//	        }
+//
+//	        AmazonS3 s3 = AmazonS3ClientBuilder.standard()
+//	            .withCredentials(new AWSStaticCredentialsProvider(credentials))
+//	            .withRegion("us-west-1")
+//	            .build();
+//        
+//		return s3;
+//	}
 	public void uploadToS3Bucket(String fileName)
 	{
 		File f=new File("result_label");
         System.out.println("Uploading a new object to S3 from a file\n");
-        s3.putObject(new PutObjectRequest("vs-result-bucket", fileName, f));
+        s3.putObject(new PutObjectRequest("vs-result-bucket-adi", fileName, f));
         System.out.println("Uploaded");
 	}
 }

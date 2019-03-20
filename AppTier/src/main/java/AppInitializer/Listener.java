@@ -11,11 +11,12 @@ import org.apache.tomcat.util.http.fileupload.FileUtils;
 import S3.S3;
 public class Listener {
 
-	int i=0;
+//	int i=0;
 	public void listen_and_giveOutput() throws IOException, InterruptedException
 	{
 		System.out.println("Listening!!!!!!!");
-		SQS sqs=new SQS('I');
+//		SQS sqs=new SQS('I');
+		SQS sqs = new SQS();
 		while(true)
 		{
 			String msg=sqs.receiveMessages();
@@ -36,8 +37,9 @@ public class Listener {
 		String output=runPythonScripts();
 		move_To_S3(vidName,output);
 		
-		SQS sqs_out=new SQS('O');
-		sqs_out.sendMessage(output+"__"+vidName);
+//		SQS sqs_out=new SQS('O');
+		SQS sqsout = new SQS();
+		sqsout.sendMessage(output+"__"+vidName);
 		
 	}
 	public void move_To_S3(String vidName, String output)throws IOException, InterruptedException
@@ -50,7 +52,9 @@ public class Listener {
 	public String runPythonScripts()throws IOException, InterruptedException
 	{
 		
-		Process p1 = Runtime.getRuntime().exec("./darknet detector demo cfg/coco.data cfg/yolov3-tiny.cfg yolov3-tiny.weights drz.h264  -dont_show ");
+//		Process p = Runtime.getRuntime().exec("bash deeplearning.sh" + " " + i);
+//		Process p1 = Runtime.getRuntime().exec("./darknet detector demo cfg/coco.data cfg/yolov3-tiny.cfg yolov3-tiny.weights drz" + i + ".h264  -dont_show > result");
+		Process p1 = Runtime.getRuntime().exec("./darknet detector demo cfg/coco.data cfg/yolov3-tiny.cfg yolov3-tiny.weights drz.h264  -dont_show > result");
 		Process p2 = Runtime.getRuntime().exec("python darknet_test.py");
 		Process p3 = Runtime.getRuntime().exec("cat result_label");
 		BufferedReader stdInput = new BufferedReader(new 
@@ -68,20 +72,23 @@ public class Listener {
                s_prev=s;
            }
            
-           TimeUnit.SECONDS.sleep(5);
+//           TimeUnit.SECONDS.sleep(5);
            return s_prev;
 	}
+	
 	public String downloadFile()throws IOException
 	{
 		BufferedInputStream in = new BufferedInputStream(new URL("http://206.207.50.7/getvideo").openStream());
-		String instance="drz"+i;
-		String vidName = "drz"+i+".h264";  
+//		String instance="drz"+i;
+//		String vidName = "drz"+i+".h264";  
+		String instance = "drz";
+		String vidName = "drz.h264";
 		FileOutputStream fos = new FileOutputStream(vidName);  
 		int bytee;  
 		while((bytee = in.read()) != -1) {  
 		    fos.write(bytee);
 		}
-		i++;
+//		i++;
 		fos.close();
 		return instance;
 	}

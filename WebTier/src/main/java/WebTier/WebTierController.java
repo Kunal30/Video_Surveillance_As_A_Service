@@ -14,9 +14,12 @@ public class WebTierController {
 	@RequestMapping("/reqobj")
     public String request_object_detection() {
        
-		SQS sqs=new SQS('I');
+//		SQS sqs=new SQS('I');
+		SQS sqs = new SQS();
+		
 		sqs.sendMessage("Sending a request for object detection");
-		SQS sqsout=new SQS('O');
+//		SQS sqsout=new SQS('O');
+		SQS sqsout = new SQS();
 		
 		String output= sqsout.getOutputFromSQSOut();
 		String out[]=output.split("__");
