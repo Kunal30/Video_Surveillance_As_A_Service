@@ -13,7 +13,10 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
-//import com.vdeosurveillance.vdeo.VdeoApplication;
+
+
+import EC2.EC2;
+import SQS.SQS;
 
 @Configuration
 @ComponentScan
@@ -24,10 +27,54 @@ public static void main(String args[])throws IOException
 {
 	SpringApplication.run(WebTierInitializer.class, args);
 	System.out.println("DONEZO!!!");
-//	scaleOut();
+	scaleOut();
 }
 public static void scaleOut()
 {
-	
+	SQS sqs=new SQS();
+	while(true)
+	{
+		int numberOfMsgs=sqs.getNumberofMessages();
+		System.out.println("Number of messages in the queue");
+		System.out.println(numberOfMsgs);
+		EC2 ec2=new EC2();
+		int num_of_live_ec2s= ec2.getNumInstances();
+		System.out.println("Number of Running Instances");
+		System.out.println(num_of_live_ec2s);
+		int num_of_App=num_of_live_ec2s-1;
+		System.out.println("Number of App Instances");
+		System.out.println(num_of_App);
+		if(numberOfMsgs >0 && numberOfMsgs>num_of_App)
+		{
+			int possible_Appinstances_to_bcreated= 19-num_of_App;
+			if(possible_Appinstances_to_bcreated>0)
+			{
+				int req_Appinstances= numberOfMsgs-num_of_App;
+				if(req_Appinstances >= possible_Appinstances_to_bcreated)
+				{
+					ec2.cloneInstances(possible_Appinstances_to_bcreated);
+				}
+				else
+				{
+					ec2.cloneInstances(req_Appinstances);
+				}
+			}
+		}
+//		Integer countOfRunningInstances = ec2Service.getNumberOfInstances();
+//		System.out.println(countOfRunningInstances);
+//		Integer numberOfAppInstances = countOfRunningInstances - 1;
+//		System.out.println(numberOfAppInstances);
+//		if (numOfMsgs > 0 && numOfMsgs > numberOfAppInstances) {
+//			Integer temp = Constants.MAXRUNNINGINSTANCES - numberOfAppInstances;
+//			if (temp > 0) {
+//				Integer temp1 = numOfMsgs - numberOfAppInstances;
+//				if (temp1 >= temp) {
+//					nameCount = ec2Service.startInstances(temp, nameCount);
+//				} else {
+//					nameCount = ec2Service.startInstances(temp1, nameCount);
+//				}
+//				nameCount++;
+//			}
+	}
 }
 }

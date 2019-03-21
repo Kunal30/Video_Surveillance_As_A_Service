@@ -69,6 +69,13 @@ public class SQS {
         return "";
 //        return messages.get(0).getBody();
 	}
+	public int getNumberofMessages()
+	{
+		String queueUrl = "https://sqs.us-west-1.amazonaws.com/841341665719/vs_output_queue";
+		ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
+        List<Message> messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+        return messages.size();
+	}
 	public void sendMessage(String str)
 	{
 //		AmazonSQS sqs=getSQSobject();

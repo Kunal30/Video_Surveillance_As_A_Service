@@ -54,42 +54,43 @@ public class Listener {
 		
 //		Process p = Runtime.getRuntime().exec("bash deeplearning.sh" + " " + i);
 //		Process p1 = Runtime.getRuntime().exec("./darknet detector demo cfg/coco.data cfg/yolov3-tiny.cfg yolov3-tiny.weights drz" + i + ".h264  -dont_show > result");
-		Process p1 = Runtime.getRuntime().exec("./darknet detector demo cfg/coco.data cfg/yolov3-tiny.cfg yolov3-tiny.weights drz.h264  -dont_show > result");
-		Process p2 = Runtime.getRuntime().exec("python darknet_test.py");
-		Process p3 = Runtime.getRuntime().exec("cat result_label");
-		BufferedReader stdInput = new BufferedReader(new 
-                InputStreamReader(p3.getInputStream()));
-
-           BufferedReader stdError = new BufferedReader(new 
-                InputStreamReader(p3.getErrorStream()));
-           
-           String s;
-           String s_prev="";
-           // read the output from the command
-           System.out.println("Here is the standard output of the command:\n");
-           while ((s = stdInput.readLine()) != null) {
-               System.out.println(s);
-               s_prev=s;
-           }
+//		Process p1 = Runtime.getRuntime().exec("./darknet detector demo cfg/coco.data cfg/yolov3-tiny.cfg yolov3-tiny.weights drz.h264  -dont_show > result");
+//		Process p1 = Runtime.getRuntime().exec("python darknet_test.py");
+//		Process p2 = Runtime.getRuntime().exec("python darknet_test.py");
+//		Process p3 = Runtime.getRuntime().exec("cat result_label");
+//		BufferedReader stdInput = new BufferedReader(new 
+//                InputStreamReader(p3.getInputStream()));
+//
+//           BufferedReader stdError = new BufferedReader(new 
+//                InputStreamReader(p3.getErrorStream()));
+//           
+//           String s;
+//           String s_prev="";
+//           // read the output from the command
+//           System.out.println("Here is the standard output of the command:\n");
+//           while ((s = stdInput.readLine()) != null) {
+//               System.out.println(s);
+//               s_prev=s;
+//           }
            
 //           TimeUnit.SECONDS.sleep(5);
-           return s_prev;
+           return "Temporary Output";
 	}
 	
 	public String downloadFile()throws IOException
 	{
-		BufferedInputStream in = new BufferedInputStream(new URL("http://206.207.50.7/getvideo").openStream());
+//		BufferedInputStream in = new BufferedInputStream(new URL("http://206.207.50.7/getvideo").openStream());
 //		String instance="drz"+i;
 //		String vidName = "drz"+i+".h264";  
 		String instance = "drz";
 		String vidName = "drz.h264";
-		FileOutputStream fos = new FileOutputStream(vidName);  
-		int bytee;  
-		while((bytee = in.read()) != -1) {  
-		    fos.write(bytee);
-		}
-//		i++;
-		fos.close();
+//		FileOutputStream fos = new FileOutputStream(vidName);  
+//		int bytee;  
+//		while((bytee = in.read()) != -1) {  
+//		    fos.write(bytee);
+//		}
+////		i++;
+//		fos.close();
 		return instance;
 	}
 }
