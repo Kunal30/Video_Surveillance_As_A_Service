@@ -1,6 +1,8 @@
 package SQS;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
@@ -8,6 +10,7 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
+import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
@@ -71,10 +74,20 @@ public class SQS {
 	}
 	public int getNumberofMessages()
 	{
-		String queueUrl = "https://sqs.us-west-1.amazonaws.com/841341665719/vs_output_queue";
-		ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
-        List<Message> messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
-        return messages.size();
+		String queueUrl = "https://sqs.us-west-1.amazonaws.com/841341665719/vs_input_queue";
+//		ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
+//        List<Message> messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+//        return messages.size();
+		List<String> attributeNames = new ArrayList<String>();
+		attributeNames.add("ApproximateNumberOfMessages");
+		
+		GetQueueAttributesRequest getQueueAttributesRequest = new GetQueueAttributesRequest(queueUrl, attributeNames);
+		Map<String, String> map = sqs.getQueueAttributes(getQueueAttributesRequest).getAttributes();
+		String numberOfMessagesString = (String) map.get("ApproximateNumberOfMessages");
+		Integer numberOfMessages = Integer.valueOf(numberOfMessagesString);
+		return numberOfMessages;
+		
+//		int n = Integer.valueOf(sqs.getQueueAttributes(new GetQueueAttributesRequest(queueUrl, "ApproximateNumberOfMessages")).getAttributes().get("ApproximateNumberOfMessages"))
 	}
 	public void sendMessage(String str)
 	{

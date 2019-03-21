@@ -26,8 +26,8 @@ public class EC2 {
     {
     	System.out.println("create an instance");
 
-        String imageId = "ami-0e355297545de2f82";  //image id of the instance
-        int minInstanceCount = num-1; //create 1 instance
+        String imageId = "ami-0696f6f1e21a43f89";  //image id of the instance
+        int minInstanceCount = Math.max(1, num-1); //create 1 instance
         int maxInstanceCount = num;
 
         RunInstancesRequest rir = new RunInstancesRequest(imageId,
