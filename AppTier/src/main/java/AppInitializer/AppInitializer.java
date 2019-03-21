@@ -1,18 +1,9 @@
 package AppInitializer;
 import java.io.*;
-import java.util.*;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.sqs.AmazonSQS;
-import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
-import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 
 import AppInitializer.AppInitializer;
 
@@ -26,9 +17,8 @@ public class AppInitializer {
 	SpringApplication.run(AppInitializer.class, args);
 	System.out.println("App Tier running!!!");
 	
-	// setup only once
-	Runtime.getRuntime().exec("sudo apt install xvfb");
-	Runtime.getRuntime().exec("Xvfb :1 & export DISPLAY=:1");
+//	Runtime.getRuntime().exec("sudo apt install xvfb");
+	
 	
 	Listener lis_obj=new Listener();
 	
