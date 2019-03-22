@@ -1,59 +1,55 @@
-vs_vpc_name="vs_vpc"
-vs_security_group_name="vs_security_group"
-vs_key_pair_name="vs_key_pair"
-vs_instance_profile_name="vs_instance_profile"
-vs_role_name="vs_role"
+#!/bin/bash
+
+vs_s3_bucket_name="vs-result-bucket-adi"
 
 vs_input_queue_name="vs_input_queue"
 vs_output_queue_name="vs_output_queue"
 
-vs_s3_bucket_name="vs-result-bucket-adi" # should be a DNS compliant name
+vs_vpc_name="vs_vpc"
+vs_internet_gateway_name="vs_internet_gateway"
+vs_subnet_name="vs_subnet"
+vs_security_group_name="vs_security_group"
+vs_key_pair_name="vs_key_pair"
+
+vs_instance_profile_name="vs_instance_profile"
+vs_role_name="vs_role"
 
 vs_web_instance_name="web_instance"
-vs_web_image_id="ami-06397100adf427136"
-vs_web_instance_type="t2.micro"
-vs_web_instance_count=1
-
 vs_app_instance_name="app_instance_1"
-vs_app_image_id="ami-0e355297545de2f82"
-vs_app_instance_type="t2.micro"
-vs_app_instance_count=1
 
-vs_app_instance_ami_name="app_instance_ami"
+vs_app_instance_ami_name="vs_app_instance_ami"
 
 vs_vpc_cidr_block="10.0.0.0/16"
 vs_subnet_cidr_block="10.0.0.0/24"
 
+vs_web_image_id="ami-06397100adf427136"
+vs_web_instance_type="t2.micro"
+vs_web_instance_count=1
+
+vs_app_image_id="ami-0e355297545de2f82"
+vs_app_instance_type="t2.micro"
+vs_app_instance_count=1
+
+# echo "vs_key_pair_name=$vs_key_pair_name" >> aws-resources.properties
+# echo "vs_instance_profile_name=$vs_instance_profile_name" >> aws-resources.properties
 
 if [ "$1" == "create" ]; then
 	echo 'BUILDING UP THE INFRASTRUCTURE'
-
-	################################
-	########## S3 SETTING ##########
-	################################
 
 	# code for non available s3 bucket?
 
 	echo 'creating S3 bucket...'
 	aws_region=`aws configure get region`
 	s3_bucket_url=`aws s3api create-bucket --bucket $vs_s3_bucket_name --region $aws_region --create-bucket-configuration LocationConstraint=$aws_region --query 'Location' --output text`
-	echo "vs_s3_bucket_url=$s3_bucket_url" >> aws-resources.properties
-
-	################################
-	########## SQS SETTING #########
-	################################
+	# echo "vs_s3_bucket_url=$s3_bucket_url" >> aws-resources.properties
 
 	echo 'creating SQS input queue...'
 	input_queue_url=`aws sqs create-queue --queue-name $vs_input_queue_name --query 'QueueUrl' --output text`
-	echo "vs_input_queue_url=$input_queue_url" >> aws-resources.properties
+	# echo "vs_input_queue_url=$input_queue_url" >> aws-resources.properties
 
 	echo 'creating SQS output queue...'
 	output_queue_url=`aws sqs create-queue --queue-name $vs_output_queue_name --query 'QueueUrl' --output text`
-	echo "vs_output_queue_url=$output_queue_url" >> aws-resources.properties
-
-	################################
-	########## VPC SETTING #########
-	################################
+	# echo "vs_output_queue_url=$output_queue_url" >> aws-resources.properties
 
 	echo 'creating VPC...'
 	vpc_id=`aws ec2 create-vpc --cidr-block $vs_vpc_cidr_block --query 'Vpc.VpcId' --output text`
@@ -65,12 +61,14 @@ if [ "$1" == "create" ]; then
 
 	echo 'creating internet gateway...'
 	internet_gateway_id=`aws ec2 create-internet-gateway --query 'InternetGateway.InternetGatewayId' --output text`
+	aws ec2 create-tags --resources $internet_gateway_id --tags "Key=\"Name\",Value=\"$vs_internet_gateway_name\""
 
 	echo 'attaching internet gateway to VPC...'
 	aws ec2 attach-internet-gateway --internet-gateway-id $internet_gateway_id --vpc-id $vpc_id
 
 	echo 'creating subnet...'
 	subnet_id=`aws ec2 create-subnet --vpc-id $vpc_id --cidr-block $vs_subnet_cidr_block --query 'Subnet.SubnetId' --output text`
+	aws ec2 create-tags --resources $subnet_id --tags "Key=\"Name\",Value=\"$vs_subnet_name\""
 
 	echo 'creating routes...'
 	route_table_id=`aws ec2 describe-route-tables --filters Name=vpc-id,Values=$vpc_id --query 'RouteTables[0].RouteTableId' --output text`
@@ -78,6 +76,7 @@ if [ "$1" == "create" ]; then
 
 	echo 'creating security group...'
 	security_group_id=`aws ec2 create-security-group --group-name $vs_security_group_name --description $vs_security_group_name --vpc-id $vpc_id --query 'GroupId' --output text`
+	aws ec2 create-tags --resources $security_group_id --tags "Key=\"Name\",Value=\"$vs_security_group_name\""
 
 	echo 'allowing incoming traffic...'
 	aws ec2 authorize-security-group-ingress --group-id $security_group_id --protocol tcp --port 22 --cidr 0.0.0.0/0
@@ -90,10 +89,6 @@ if [ "$1" == "create" ]; then
 	aws ec2 create-key-pair --key-name $vs_key_pair_name --query 'KeyMaterial' --output text > ~/.ssh/$vs_key_pair_name.pem
 	chmod 400 ~/.ssh/$vs_key_pair_name.pem
 
-	################################
-	########## IAM SETTING #########
-	################################
-
 	echo 'creating instance profile...'
 	aws iam create-instance-profile --instance-profile-name $vs_instance_profile_name > /dev/null
 
@@ -103,15 +98,13 @@ if [ "$1" == "create" ]; then
 	echo 'attaching policies to role...'
 	aws iam attach-role-policy --role-name $vs_role_name --policy-arn arn:aws:iam::aws:policy/AmazonS3FullAccess
 	aws iam attach-role-policy --role-name $vs_role_name --policy-arn arn:aws:iam::aws:policy/AmazonSQSFullAccess
+	aws iam attach-role-policy --role-name $vs_role_name --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess
 
 	echo 'attaching role to instance profile...'
 	aws iam add-role-to-instance-profile --instance-profile-name $vs_instance_profile_name --role-name $vs_role_name
 
-	sleep 10 # to avoid race condition of using run-instances just after creating instance profile
-
-	################################
-	########## EC2 SETTING #########
-	################################
+	# to avoid race condition of using run-instances just after creating instance profile
+	sleep 10
 
 	echo 'creating web instance...'
 	web_instance_id=`aws ec2 run-instances --iam-instance-profile Name=$vs_instance_profile_name --image-id $vs_web_image_id --count $vs_web_instance_count --instance-type $vs_web_instance_type --key-name $vs_key_pair_name --security-group-ids $security_group_id --subnet-id $subnet_id --associate-public-ip-address --query "Instances[0].InstanceId" --output text`
@@ -121,75 +114,65 @@ if [ "$1" == "create" ]; then
 	app_instance_id=`aws ec2 run-instances --iam-instance-profile Name=$vs_instance_profile_name --image-id $vs_app_image_id --count $vs_app_instance_count --instance-type $vs_app_instance_type --key-name $vs_key_pair_name --security-group-ids $security_group_id --subnet-id $subnet_id --associate-public-ip-address  --query "Instances[0].InstanceId" --output text`
 	aws ec2 create-tags --resources $app_instance_id --tags "Key=\"Name\",Value=\"$vs_app_instance_name\""
 
-	sleep 60 # for proper creation of ec2 instances
+	# for proper creation of ec2 instances
+	echo 'finalizing creation...'
+	sleep 60
 
-	################################
-	########## DEPLOYMENT ##########
-	################################
 
-	web_instance_ip=`aws ec2 describe-instances --filters Name=tag:Name,Values=$vs_web_instance_name Name=vpc-id,Values=$vpc_id --query 'Reservations[0].Instances[0].PublicIpAddress' --output text`
+elif [ "$1" == "deploy-project" ]; then
+
+	vpc_id=`aws ec2 describe-vpcs --filters Name=tag:Name,Values=$vs_vpc_name  --query 'Vpcs[0].VpcId' --output text`
 
 	echo "deploying web tier application..."
-	scp -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no install_java.sh ubuntu@$web_instance_ip:~/
-	scp -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no WebTier-1.0.0.jar ubuntu@$web_instance_ip:~/
-	ssh -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip bash install_java.sh > /dev/null
-	# ssh -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip java -jar WebTier-1.0.0.jar &
-	ssh -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip java -jar WebTier-1.0.0.jar
-	echo "web tier application deployed!"
-
-	app_instance_ip=`aws ec2 describe-instances --filters Name=tag:Name,Values=$vs_app_instance_name Name=vpc-id,Values=$vpc_id --query 'Reservations[0].Instances[0].PublicIpAddress' --output text`
+	web_instance_ip=`aws ec2 describe-instances --filters Name=tag:Name,Values=$vs_web_instance_name Name=vpc-id,Values=$vpc_id --query 'Reservations[0].Instances[0].PublicIpAddress' --output text`
+	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ec2_setup.sh ubuntu@$web_instance_ip:~/
+	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./WebTier/pom.xml ubuntu@$web_instance_ip:~/
+	scp -r -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./WebTier/src ubuntu@$web_instance_ip:~/
+	echo "starting web tier application..."
+	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip bash ec2_setup.sh > /dev/null
+	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip mvn clean package > /dev/null
+	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip java -jar ./target/WebTier-1.0.0.jar &
 
 	echo "deploying app tier application..."
-	scp -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no install_java.sh ubuntu@$app_instance_ip:~/
-	scp -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no darknet_test.py ubuntu@$app_instance_ip:~/darknet/
-	scp -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no yolov3-tiny.weights ubuntu@$app_instance_ip:~/darknet/
-	# scp -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no deeplearning.sh ubuntu@$app_instance_ip:~/darknet/
-	scp -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no AppTier-1.0.0.jar ubuntu@$app_instance_ip:~/darknet/
-	ssh -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip bash install_java.sh > /dev/null
-	# ssh -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip java -jar ./darknet/AppTier-1.0.0.jar &
-	ssh -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip java -jar ./darknet/AppTier-1.0.0.jar
-	echo "app tier application deployed!"
+	app_instance_ip=`aws ec2 describe-instances --filters Name=tag:Name,Values=$vs_app_instance_name Name=vpc-id,Values=$vpc_id --query 'Reservations[0].Instances[0].PublicIpAddress' --output text`
+	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ec2_setup.sh ubuntu@$app_instance_ip:~/
+	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./AppTier/pom.xml ubuntu@$app_instance_ip:~/
+	scp -r -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./AppTier/src ubuntu@$app_instance_ip:~/
+	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    darknet_test.py ubuntu@$app_instance_ip:~/darknet/
+	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    yolov3-tiny.weights ubuntu@$app_instance_ip:~/darknet/
+	echo "starting app tier application..."
+	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip bash ec2_setup.sh > /dev/null
+	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip mvn clean package > /dev/null
+	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip mv ./target/AppTier-1.0.0.jar ./darknet > /dev/null
+	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip java -jar ./darknet/AppTier-1.0.0.jar &
 
-	sleep 60 # for proper deployment of applications
-
-	################################
-	########## APP IMAGE ###########
-	################################
-
-	# echo "creating app instance AMI image..."
-	# app_instance_ami_id=`aws ec2 create-image --instance-id $app_instance_id --name "app_instance_ami" --no-reboot --query 'ImageId' --output text`
-	# aws ec2 create-tags --resources $app_instance_ami_id --tags "Key=\"Name\",Value=\"$vs_app_instance_ami_name\""
+	echo "creating app instance AMI image..."
+	app_instance_id=`aws ec2 describe-instances --filters Name=tag:Name,Values=$vs_app_instance_name Name=vpc-id,Values=$vpc_id --query 'Reservations[0].Instances[0].InstanceId' --output text`
+	app_instance_ami_id=`aws ec2 create-image --instance-id $app_instance_id --name $vs_app_instance_ami_name --no-reboot --query 'ImageId' --output text`
+	aws ec2 create-tags --resources $app_instance_ami_id --tags "Key=\"Name\",Value=\"$vs_app_instance_ami_name\""
+	
+	sleep 60
 
 
 elif [ "$1" == "destroy" ]; then
 	echo 'BREAKING DOWN THE INFRASTRUCTURE'
 
-	echo 'deleting S3 bucket...'
-	aws_region=`aws configure get region`
-	aws s3api delete-bucket --bucket $vs_s3_bucket_name --region $aws_region
+	app_instance_ami_id=`aws ec2 describe-images --filters Name=tag:Name,Values=$vs_app_instance_ami_name --query 'Images[0].ImageId' --output text`
+	ami_snapshot_id=`aws ec2 describe-images --filters Name=tag:Name,Values=$vs_app_instance_ami_name --query 'Images[0].BlockDeviceMappings[0].Ebs.SnapshotId' --output text`
 
-	echo 'deleting SQS input queue...'
-	input_queue_url=`aws sqs get-queue-url --queue-name $vs_input_queue_name --query 'QueueUrl' --output text`
-	aws sqs delete-queue --queue-url $input_queue_url
+	echo 'deleting app instance AMI image...'
+	aws ec2 deregister-image --image-id $app_instance_ami_id
 
-	echo 'deleting SQS output queue...'
-	output_queue_url=`aws sqs get-queue-url --queue-name $vs_output_queue_name --query 'QueueUrl' --output text`
-	aws sqs delete-queue --queue-url $output_queue_url
-
-	# echo 'deleting app instance AMI image...'
-	# app_instance_ami_id=`aws ec2 describe-images --filters Name=tag:Name,Values=$vs_app_instance_ami_name --query 'Images[0].ImageId' --output text`
-	# aws ec2 describe-images --filters Name=tag:Name,Values=$app_instance_ami_id
-	# aws ec2 deregister-image --image-id app_instance_ami_id
-
-	# # DELETE SNAPSHOT REMAINING
-
+	echo 'deleting AMI snapshot...'
+	aws ec2 delete-snapshot --snapshot-id $ami_snapshot_id
 
 	vpc_id=`aws ec2 describe-vpcs --filters Name=tag:Name,Values=$vs_vpc_name  --query 'Vpcs[0].VpcId' --output text`
 
 	echo 'deleting instances...'
 	aws ec2 terminate-instances --instance-ids $(aws ec2 describe-instances --filters  Name=vpc-id,Values=$vpc_id --query "Reservations[].Instances[].[InstanceId]" --output text | tr '\n' ' ') > /dev/null
 
-	sleep 60 # enough time for instances to be marked as shutdown
+	# enough time for instances to be marked as shutdown
+	sleep 60
 
 	echo 'detaching role from instance profile...'
 	aws iam remove-role-from-instance-profile --instance-profile-name $vs_instance_profile_name --role-name $vs_role_name
@@ -230,6 +213,21 @@ elif [ "$1" == "destroy" ]; then
 	echo 'deleting VPC...'
 	aws ec2 delete-vpc --vpc-id $vpc_id
 
+	echo 'deleting SQS output queue...'
+	output_queue_url=`aws sqs get-queue-url --queue-name $vs_output_queue_name --query 'QueueUrl' --output text`
+	aws sqs delete-queue --queue-url $output_queue_url
+	
+	echo 'deleting SQS input queue...'
+	input_queue_url=`aws sqs get-queue-url --queue-name $vs_input_queue_name --query 'QueueUrl' --output text`
+	aws sqs delete-queue --queue-url $input_queue_url
+
+	echo 'deleting S3 bucket...'
+	aws_region=`aws configure get region`
+	aws s3api delete-bucket --bucket $vs_s3_bucket_name --region $aws_region
+
+	
 else
-	echo "use either \"create\" argument to create infrastructure or \"destroy\" argument to destroy infrastructure"
+	echo "use \"create\" argument to create infrastructure"
+	echo "use \"deploy-project\" argument to  deploy the project"
+	echo "use \"destroy\" argument to destroy infrastructure"
 fi
