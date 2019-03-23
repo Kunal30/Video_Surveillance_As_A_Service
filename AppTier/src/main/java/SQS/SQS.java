@@ -19,8 +19,10 @@ public class SQS {
 
 	public String receiveMessages() {
 
-		String queueUrl = "https://sqs.us-west-1.amazonaws.com/841341665719/vs_input_queue";
+//		String queueUrl = "https://sqs.us-west-1.amazonaws.com/841341665719/vs_input_queue";
+		List<String> queueUrls= sqs.listQueues().getQueueUrls();
 
+		String queueUrl = queueUrls.get(0);
 		ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
 		List<Message> messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
 		if (messages.size() >= 1) {
@@ -34,15 +36,19 @@ public class SQS {
 
 	public void sendMessage(String message) {
 
-		String queueUrl = "https://sqs.us-west-1.amazonaws.com/841341665719/vs_output_queue";
+//		String queueUrl = "https://sqs.us-west-1.amazonaws.com/841341665719/vs_output_queue";
+		List<String> queueUrls= sqs.listQueues().getQueueUrls();
 
+		String queueUrl = queueUrls.get(1);
 		sqs.sendMessage(queueUrl, message);
 	}
 
 	public void deleteMessage(Message msg) {
 
-		String queueUrl = "https://sqs.us-west-1.amazonaws.com/841341665719/vs_input_queue";
+//		String queueUrl = "https://sqs.us-west-1.amazonaws.com/841341665719/vs_input_queue";
+		List<String> queueUrls= sqs.listQueues().getQueueUrls();
 
+		String queueUrl = queueUrls.get(0);
 		String messageReceiptHandle = msg.getReceiptHandle();
 
 		sqs.deleteMessage(new DeleteMessageRequest(queueUrl, messageReceiptHandle));

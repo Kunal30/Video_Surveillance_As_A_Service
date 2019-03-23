@@ -27,7 +27,7 @@ public static void main(String args[])throws IOException
 {
 	SpringApplication.run(WebTierInitializer.class, args);
 	System.out.println("DONEZO!!!");
-	scaleOut();
+//	scaleOut();
 }
 public static void scaleOut()
 {

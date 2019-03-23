@@ -24,6 +24,7 @@ public class WebTierController {
 		String output= sqsout.getOutputFromSQSOut();
 		String out[]=output.split("__");
        return out[0];
+		
     }
 				        
 	

@@ -11,9 +11,13 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.DeleteMessageRequest;
 import com.amazonaws.services.sqs.model.GetQueueAttributesRequest;
+import com.amazonaws.services.sqs.model.GetQueueUrlRequest;
+import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import com.amazonaws.services.sqs.model.Message;
 import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
 import com.amazonaws.services.sqs.model.SendMessageRequest;
+import com.amazonaws.*;
+//import com.aws.listener.constants.Constants;
 
 public class SQS {
 
@@ -49,8 +53,9 @@ public class SQS {
 	{
 //		AmazonSQS sqs=getSQSobject();
 		
-//		List<String> queueUrls= sqs.listQueues().getQueueUrls();
-		String queueUrl = "https://sqs.us-west-1.amazonaws.com/841341665719/vs_output_queue";
+		List<String> queueUrls= sqs.listQueues().getQueueUrls();
+		
+		String queueUrl = queueUrls.get(1);
 		
 //		if(c=='I')
 //		queueUrl=queueUrls.get(0);
@@ -74,9 +79,16 @@ public class SQS {
 	}
 	public int getNumberofMessages()
 	{
-		String queueUrl = "https://sqs.us-west-1.amazonaws.com/841341665719/vs_input_queue";
+//		GetQueueUrlResult getQueueUrlResponse =
+//		        sqsClient.getQueueUrl(GetQueueUrlRequest.builder().queueName("vs_input_queue").build());
+//		String queueUrl = getQueueUrlResponse.getQueueUrl();
+		List<String> queueUrls= sqs.listQueues().getQueueUrls();
+
+		String queueUrl = queueUrls.get(0);
+//		Message message = sqsService.receiveMessage(Constants.INPUTQUEUENAME, 20, 15);
 //		ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest(queueUrl);
 //        List<Message> messages = sqs.receiveMessage(receiveMessageRequest).getMessages();
+        
 //        return messages.size();
 		List<String> attributeNames = new ArrayList<String>();
 		attributeNames.add("ApproximateNumberOfMessages");
@@ -93,7 +105,10 @@ public class SQS {
 	{
 //		AmazonSQS sqs=getSQSobject();
 //		List<String> queueUrls= sqs.listQueues().getQueueUrls();
-		String queueUrl = "https://sqs.us-west-1.amazonaws.com/841341665719/vs_input_queue";
+		List<String> queueUrls= sqs.listQueues().getQueueUrls();
+
+		String queueUrl = queueUrls.get(0);
+//		String queueUrl = "https://sqs.us-west-1.amazonaws.com/841341665719/vs_input_queue";
 		
 //		if(c=='I')
 //		queueUrl=queueUrls.get(0);
@@ -110,7 +125,10 @@ public class SQS {
 //		List<String> queueUrls= sqs.listQueues().getQueueUrls();
 //		if(queueUrls.size()>0)
 //		{
-		String queueUrl = "https://sqs.us-west-1.amazonaws.com/841341665719/vs_output_queue";
+		List<String> queueUrls= sqs.listQueues().getQueueUrls();
+
+		String queueUrl = queueUrls.get(1);
+//		String queueUrl = "https://sqs.us-west-1.amazonaws.com/841341665719/vs_output_queue";
 //		
 //		if(c=='I')
 //		queueUrl=queueUrls.get(0);
