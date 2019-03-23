@@ -25,21 +25,6 @@ public class WebTierController {
 		String out[]=output.split("__");
        return out[0];
     }
-	
-	
-	
-	@RequestMapping("/mingu")
-    public String index() {
-    	System.out.println("A Hulllooo!!");
-       return "Welcome to Dr. Z's Project!!";
-    }
-
-    @RequestMapping("/pingu")
-    public String index2() {
-    	System.out.println("A Hulllooo!!");
-       return "Return to castle Wolfenstein!!";
-    }
-    
-    
+				        
 	
 }
