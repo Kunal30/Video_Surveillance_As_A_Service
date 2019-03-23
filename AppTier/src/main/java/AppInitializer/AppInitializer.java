@@ -17,7 +17,7 @@ public class AppInitializer {
 	SpringApplication.run(AppInitializer.class, args);
 	System.out.println("App Tier running!!!");
 	
-//	Runtime.getRuntime().exec("sudo apt install xvfb");
+	Runtime.getRuntime().exec("sudo apt install xvfb");
 
 	Listener lis_obj=new Listener();
 	

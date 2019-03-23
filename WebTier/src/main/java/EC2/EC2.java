@@ -26,16 +26,19 @@ public class EC2 {
     {
     	System.out.println("create an instance");
 
-        String imageId = "ami-0696f6f1e21a43f89";  //image id of the instance
+        String imageId = "ami-0881bf30288f8ffc2";  //image id of the instance
         int minInstanceCount = Math.max(1, num-1); //create 1 instance
         int maxInstanceCount = num;
 
         RunInstancesRequest rir = new RunInstancesRequest(imageId,
                 minInstanceCount, maxInstanceCount);
         rir.setInstanceType("t2.micro"); //set instance type
-
+        
+        // running jar far on EC2 instance creation
+        rir.withUserData("#!/bin/bash \n java -jar AppTier-1.0.0.jar"); // replace with terminator later
         RunInstancesResult result = ec2.runInstances(rir);
-
+        
+       
         List<Instance> resultInstance =
                 result.getReservation().getInstances();
 
