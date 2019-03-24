@@ -20,7 +20,7 @@ public class S3 {
 	public void uploadToS3Bucket(String fileName) {
 		File f = new File("result_label");
 
-		s3.putObject("vs-result-bucket-adi", fileName, f);
+		s3.putObject("vs-kunal-isolated", fileName, f);
 
 		FileUtils.deleteQuietly(f);
 

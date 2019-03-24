@@ -1,5 +1,6 @@
 package EC2;
 
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
@@ -14,6 +15,7 @@ import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.StartInstancesRequest;
 import com.amazonaws.services.ec2.model.StopInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
+import com.amazonaws.util.Base64;
 
 public class EC2 {
 	
@@ -26,16 +28,17 @@ public class EC2 {
     {
     	System.out.println("create an instance");
 
-        String imageId = "ami-0e355297545de2f82";  //image id of the instance
+        String imageId = "ami-027fae7e49cf3a1f6";  //image id of the terminator instance
         int minInstanceCount = Math.max(1, num-1); //create 1 instance
         int maxInstanceCount = num;
 
         RunInstancesRequest rir = new RunInstancesRequest(imageId,
                 minInstanceCount, maxInstanceCount);
         rir.setInstanceType("t2.micro"); //set instance type
-        
-        // running jar far on EC2 instance creation
-//        rir.withUserData("#!/bin/bash \n java -jar AppTier-1.0.0.jar"); // replace with terminator later
+        rir.withKeyName("isolated_test.pem");
+        // running jar from far on EC2 instance creation
+        String initScript="#!/bin/bash \n java -jar ./darknet/AppTier_Terminator-1.0.0.jar";
+        rir.withUserData(Base64.encodeAsString(initScript.getBytes())); // replace with terminator later
         RunInstancesResult result = ec2.runInstances(rir);
         
        
@@ -47,6 +50,22 @@ public class EC2 {
                     ins.getInstanceId());//print the instance ID
         }
     }
+//    private String getECuserData(String string) {
+//		// TODO Auto-generated method stub
+//    	String userData = string;
+//        String encodedString = 
+//        		  Base64.getEncoder().withoutPadding().encodeToString(userData.getBytes());
+//		return userData;
+//	}
+//	public String getECSuserData(String clusterName) {
+//        String userData = clusterName;
+//        String encodedString = 
+//        		  Base64.getEncoder().withoutPadding().encodeToString(userData.getBytes());
+//        return encodedString;
+//    }
+    
+    
+    
 	public void createinstance() {
 
 //        final AmazonEC2 ec2 = AmazonEC2ClientBuilder.defaultClient();
