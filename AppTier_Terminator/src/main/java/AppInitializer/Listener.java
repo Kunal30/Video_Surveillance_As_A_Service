@@ -28,7 +28,7 @@ public class Listener {
 				System.out.println("Instance Deleted!!");
 			}
 			
-//			System.out.println("Listening...");
+     		System.out.println("Listening...");
 //			System.out.println("No message...");
 		}
 	}

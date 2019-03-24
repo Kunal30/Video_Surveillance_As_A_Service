@@ -149,13 +149,33 @@ if [ "$1" == "create" ]; then
 	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ec2_setup.sh ubuntu@$web_instance_ip:~/
 	# scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./WebTier/pom.xml ubuntu@$web_instance_ip:~/
 	# scp -r -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./WebTier/src ubuntu@$web_instance_ip:~/
-	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip bash ec2_setup.sh > /dev/null
+	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip bash ec2_setup.sh 
 	# ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip mvn clean package > /dev/null
 
 
 elif [ "$1" == "run-project" ]; then
 
 	vpc_id=`aws ec2 describe-vpcs --filters Name=tag:Name,Values=$vs_vpc_name  --query 'Vpcs[0].VpcId' --output text`
+
+	app_instance_ip=`aws ec2 describe-instances --filters Name=tag:Name,Values=$vs_app_instance_name Name=vpc-id,Values=$vpc_id --query 'Reservations[0].Instances[0].PublicIpAddress' --output text`
+	# scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ec2_setup.sh ubuntu@$app_instance_ip:~/
+	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./AppTier/pom.xml ubuntu@$app_instance_ip:~/
+	scp -r -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./AppTier/src ubuntu@$app_instance_ip:~/
+	scp -r -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./AppTier/target/AppTier-1.0.0.jar ubuntu@$app_instance_ip:~/darknet/
+	# scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    darknet_test.py ubuntu@$app_instance_ip:~/darknet/
+	# scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    yolov3-tiny.weights ubuntu@$app_instance_ip:~/darknet/
+	echo "starting app tier application..."
+	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip bash ec2_setup.sh #> /dev/null
+	# ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip mvn clean package > /dev/null
+	# ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip mv ./target/AppTier-1.0.0.jar ./darknet > /dev/null
+	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip cd darknet
+	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip java -jar AppTier-1.0.0.jar &
+	echo "Finished AppTier Installation"
+	#For successful AppTier installation
+	sleep 20
+
+
+
 
 	# echo "deploying web tier application..."
 	web_instance_ip=`aws ec2 describe-instances --filters Name=tag:Name,Values=$vs_web_instance_name Name=vpc-id,Values=$vpc_id --query 'Reservations[0].Instances[0].PublicIpAddress' --output text`
@@ -165,21 +185,10 @@ elif [ "$1" == "run-project" ]; then
 	echo "starting web tier application..."
 	# ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip bash ec2_setup.sh > /dev/null
 	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip mvn clean package > /dev/null
-	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip java -jar ./target/WebTier-1.0.0.jar &
-
+	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip java -jar ./target/WebTier-1.0.0.jar & > /dev/null
+	echo "Finished WebTier Installation"
 	# echo "deploying app tier application..."
-	app_instance_ip=`aws ec2 describe-instances --filters Name=tag:Name,Values=$vs_app_instance_name Name=vpc-id,Values=$vpc_id --query 'Reservations[0].Instances[0].PublicIpAddress' --output text`
-	# scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ec2_setup.sh ubuntu@$app_instance_ip:~/
-	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./AppTier/pom.xml ubuntu@$app_instance_ip:~/
-	scp -r -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./AppTier/src ubuntu@$app_instance_ip:~/
-	# scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    darknet_test.py ubuntu@$app_instance_ip:~/darknet/
-	# scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    yolov3-tiny.weights ubuntu@$app_instance_ip:~/darknet/
-	echo "starting app tier application..."
-	# ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip bash ec2_setup.sh > /dev/null
-	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip mvn clean package > /dev/null
-	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip mv ./target/AppTier-1.0.0.jar ./darknet > /dev/null
-	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip java -jar ./darknet/AppTier-1.0.0.jar &
-
+	
 
 elif [ "$1" == "destroy" ]; then
 	echo 'BREAKING DOWN THE INFRASTRUCTURE'

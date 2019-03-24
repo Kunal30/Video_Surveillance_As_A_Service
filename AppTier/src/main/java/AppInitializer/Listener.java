@@ -25,7 +25,7 @@ public class Listener {
 			}
 			
 			System.out.println("Listening...");
-			System.out.println("No message...");
+//			System.out.println("No message...");
 		}
 	}
 
@@ -67,7 +67,7 @@ public class Listener {
 //		Process p0 = Runtime.getRuntime().exec("Xvfb :1 & export DISPLAY=:1; ./darknet detector demo cfg/coco.data cfg/yolov3-tiny.cfg yolov3-tiny.weights " + fileName + " -dont_show > result; python darknet_test.py");
 //		p0.waitFor();
 
-		Process p1 = new ProcessBuilder("/bin/bash", "-c", "Xvfb :1 & export DISPLAY=:1; ./darknet detector demo cfg/coco.data cfg/yolov3-tiny.cfg yolov3-tiny.weights " + fileName + " -dont_show > result; python darknet_test.py; cat result_label").start();
+		Process p1 = new ProcessBuilder("/bin/bash", "-c", " Xvfb :1 & export DISPLAY=:1; ./darknet detector demo cfg/coco.data cfg/yolov3-tiny.cfg yolov3-tiny.weights " + fileName + " -dont_show > result; python darknet_test.py; cat result_label").start();
 		p1.waitFor();
 		
 //		Process p1 = Runtime.getRuntime().exec("");

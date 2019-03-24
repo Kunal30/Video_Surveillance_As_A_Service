@@ -1,5 +1,8 @@
 sudo add-apt-repository -y ppa:webupd8team/java
 sudo apt-get update
-echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | sudo debconf-set-selections
-sudo apt-get install -y oracle-java8-installer
+# echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | sudo debconf-set-selections
+# sudo apt-get install -y oracle-java8-installer
+sudo apt-get install -y default-jdk
 sudo apt-get install -y maven
+sudo apt install -y xvfb
+Xvfb :1 & export DISPLAY=:1
