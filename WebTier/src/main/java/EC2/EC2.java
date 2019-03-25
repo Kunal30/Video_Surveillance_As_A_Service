@@ -2,6 +2,8 @@ package EC2;
 
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.DescribeInstanceStatusRequest;
@@ -17,6 +19,7 @@ import com.amazonaws.services.ec2.model.StopInstancesRequest;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.util.Base64;
 
+
 public class EC2 {
 	
 	final AmazonEC2 ec2;
@@ -24,7 +27,7 @@ public class EC2 {
 	{
 		  ec2 = AmazonEC2ClientBuilder.defaultClient();
 	}
-    public void cloneInstances(int num)
+    public void cloneInstances(int num) throws InterruptedException
     {
     	System.out.println("create an instance");
 
@@ -34,11 +37,18 @@ public class EC2 {
 
         RunInstancesRequest rir = new RunInstancesRequest(imageId,
                 minInstanceCount, maxInstanceCount);
-        rir.setInstanceType("t2.micro"); //set instance type
-        rir.withKeyName("isolated_test.pem");
+//        rir.setInstanceType("t2.micro"); //set instance type
+        List<String> securityGroupIds = new ArrayList<String>();
+		securityGroupIds.add("sg-03a08d1113b8b36b8");
+        rir.withInstanceType("t2.micro")
+           .withKeyName("isolated_test")
+           .withSecurityGroupIds(securityGroupIds);
+//   		rir.setSecurityGroupIds(securityGroupIds);
+
+//        rir.withKeyName("isolated_test.pem");
         // running jar from far on EC2 instance creation
-        String initScript="#!/bin/bash \n java -jar ./darknet/AppTier_Terminator-1.0.0.jar";
-        rir.withUserData(Base64.encodeAsString(initScript.getBytes())); // replace with terminator later
+        String initScript="cd darknet; java -jar AppTier_Terminator-1.0.0.jar";
+        rir.setUserData(Base64.encodeAsString(initScript.getBytes())); // replace with terminator later
         RunInstancesResult result = ec2.runInstances(rir);
         
        
@@ -49,6 +59,7 @@ public class EC2 {
             System.out.println("New instances has been created:" +
                     ins.getInstanceId());//print the instance ID
         }
+        TimeUnit.SECONDS.sleep(20);
     }
 //    private String getECuserData(String string) {
 //		// TODO Auto-generated method stub

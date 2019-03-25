@@ -6,6 +6,8 @@ import java.io.*;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.io.FileUtils;
 
 import S3.S3;
@@ -25,6 +27,7 @@ public class Listener {
 			}
 			
 			System.out.println("Listening...");
+			TimeUnit.SECONDS.sleep(3);
 //			System.out.println("No message...");
 		}
 	}

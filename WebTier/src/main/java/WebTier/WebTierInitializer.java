@@ -1,6 +1,7 @@
 package WebTier;
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -23,13 +24,13 @@ import SQS.SQS;
 @EnableAutoConfiguration
 public class WebTierInitializer {
 
-public static void main(String args[])throws IOException
+public static void main(String args[])throws IOException, InterruptedException
 {
 	SpringApplication.run(WebTierInitializer.class, args);
 	System.out.println("DONEZO!!!");
 	scaleOut();
 }
-public static void scaleOut()
+public static void scaleOut() throws InterruptedException
 {
 	SQS sqs=new SQS();
 	while(true)
@@ -50,16 +51,20 @@ public static void scaleOut()
 			if(possible_Appinstances_to_bcreated>0)
 			{
 				int req_Appinstances= numberOfMsgs-num_of_App;
+				System.out.println("Required App Instances="+req_Appinstances);
+				System.out.println("Possible App Instances="+possible_Appinstances_to_bcreated);
 				if(req_Appinstances >= possible_Appinstances_to_bcreated)
 				{
 					ec2.cloneInstances(possible_Appinstances_to_bcreated);
 				}
-				else
+				else if(req_Appinstances < possible_Appinstances_to_bcreated)
 				{
 					ec2.cloneInstances(req_Appinstances);
 				}
 			}
 		}
+		TimeUnit.SECONDS.sleep(3);
+
 //		Integer countOfRunningInstances = ec2Service.getNumberOfInstances();
 //		System.out.println(countOfRunningInstances);
 //		Integer numberOfAppInstances = countOfRunningInstances - 1;
