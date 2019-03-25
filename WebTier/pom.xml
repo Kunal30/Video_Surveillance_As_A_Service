@@ -23,6 +23,12 @@
 			<artifactId>aws-java-sdk</artifactId>
 			<version>1.11.519</version>
 		</dependency>
+		<dependency>
+    <groupId>commons-codec</groupId>
+    <artifactId>commons-codec</artifactId>
+    <version>1.9</version>
+</dependency>
+		
 	</dependencies>
 	<build>
 		<plugins>

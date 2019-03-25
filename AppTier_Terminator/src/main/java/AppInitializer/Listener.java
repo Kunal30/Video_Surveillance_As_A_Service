@@ -6,6 +6,8 @@ import java.io.*;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.io.FileUtils;
 
 import EC2.EC2;
@@ -16,7 +18,7 @@ public class Listener {
 	public void listen_and_giveOutput() throws IOException, InterruptedException {
 		
 		SQS sqs = new SQS();
-		
+		int i=0;
 		while (true) {
 			String msg = sqs.receiveMessages();
 			
@@ -29,6 +31,14 @@ public class Listener {
 			}
 			
      		System.out.println("Listening...");
+     		TimeUnit.SECONDS.sleep(1);
+     		if(i==60)
+     		{
+     			System.out.println("60 seconds over");
+     			EC2 ec2=new EC2();
+     			ec2.endInstance();
+     		}
+     		i++;	
 //			System.out.println("No message...");
 		}
 	}
