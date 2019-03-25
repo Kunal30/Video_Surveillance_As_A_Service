@@ -1,23 +1,23 @@
 #!/bin/bash
 
-vs_s3_bucket_name="vs-result-bucket-adi"
+vs_s3_bucket_name="vs-result-bucket-aditya"
 
-vs_input_queue_name="vs_input_queue"
-vs_output_queue_name="vs_output_queue"
+vs_input_queue_name="vs_input_queue-aditya"
+vs_output_queue_name="vs_output_queue-aditya"
 
-vs_vpc_name="vs_vpc"
-vs_internet_gateway_name="vs_internet_gateway"
-vs_subnet_name="vs_subnet"
-vs_security_group_name="vs_security_group"
-vs_key_pair_name="vs_key_pair"
+vs_vpc_name="vs_vpc-aditya"
+vs_internet_gateway_name="vs_internet_gateway-aditya"
+vs_subnet_name="vs_subnet-aditya"
+vs_security_group_name="vs_security_group-aditya"
+vs_key_pair_name="vs_key_pair-aditya"
 
-vs_instance_profile_name="vs_instance_profile"
-vs_role_name="vs_role"
+vs_instance_profile_name="vs_instance_profile-aditya"
+vs_role_name="vs_role-aditya"
 
-vs_web_instance_name="web_instance"
-vs_app_instance_name="app_instance_1"
+vs_web_instance_name="web_instance-aditya"
+vs_app_instance_name="app_instance_1-aditya"
 
-vs_app_instance_ami_name="vs_app_instance_ami"
+vs_app_instance_ami_name="vs_app_instance_ami-aditya"
 
 vs_vpc_cidr_block="10.0.0.0/16"
 vs_subnet_cidr_block="10.0.0.0/24"
@@ -31,12 +31,10 @@ vs_app_instance_type="t2.micro"
 vs_app_instance_count=1
 
 
-
-
 if [ "$1" == "create" ]; then
 	echo 'BUILDING UP THE INFRASTRUCTURE'
 
-	# code for non available s3 bucket?
+	# TODO: code for non available s3 bucket
 
 	echo 'creating S3 bucket...'
 	aws_region=`aws configure get region`
@@ -87,7 +85,6 @@ if [ "$1" == "create" ]; then
 	aws ec2 authorize-security-group-ingress --group-id $security_group_id --protocol tcp --port 8080 --cidr 0.0.0.0/0
 
 	echo 'creating key pair...'
-	# aws ec2 create-key-pair --key-name $vs_key_pair_name > /dev/null
 	aws ec2 create-key-pair --key-name $vs_key_pair_name --query 'KeyMaterial' --output text > ~/.ssh/$vs_key_pair_name.pem
 	chmod 400 ~/.ssh/$vs_key_pair_name.pem
 	echo "vs_key_pair_name=$vs_key_pair_name" >> aws-resources.properties
@@ -119,81 +116,75 @@ if [ "$1" == "create" ]; then
 	aws ec2 create-tags --resources $app_instance_id --tags "Key=\"Name\",Value=\"$vs_app_instance_name\""
 
 	# for proper creation of ec2 instances
-	sleep 60
+	echo "finalizing creation..."
+	sleep 60 # TODO: can be reduced?
 
-	###########################################
-	##### DEPLOY PROJECT AND CREATE IMAGE #####
-	###########################################
 
-	echo "setting up app tier application..."
+elif [ "$1" == "deploy-project" ]; then
+
+	vpc_id=`aws ec2 describe-vpcs --filters Name=tag:Name,Values=$vs_vpc_name  --query 'Vpcs[0].VpcId' --output text`
+
+	# echo "###################################"
+	# echo "###### DEPLOYING APP-TIER #########"
+	# echo "###################################"
 	app_instance_ip=`aws ec2 describe-instances --filters Name=tag:Name,Values=$vs_app_instance_name Name=vpc-id,Values=$vpc_id --query 'Reservations[0].Instances[0].PublicIpAddress' --output text`
-	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ec2_setup.sh ubuntu@$app_instance_ip:~/
-	# scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./AppTier/pom.xml ubuntu@$app_instance_ip:~/
-	# scp -r -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./AppTier/src ubuntu@$app_instance_ip:~/
 	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    darknet_test.py ubuntu@$app_instance_ip:~/darknet/
 	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    yolov3-tiny.weights ubuntu@$app_instance_ip:~/darknet/
-	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip bash ec2_setup.sh > /dev/null
-	# ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip mvn clean package > /dev/null
-	# ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip mv ./target/AppTier-1.0.0.jar ./darknet > /dev/null
+	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./AppTier/pom.xml ubuntu@$app_instance_ip:~/
+	scp -r -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./AppTier/src ubuntu@$app_instance_ip:~/
+	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    AppTier.sh ubuntu@$app_instance_ip:~/
+	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip bash AppTier.sh &
+	# ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no ubuntu@$app_instance_ip <<-HERE
+	# 	sudo add-apt-repository -y ppa:webupd8team/java
+	# 	sudo apt-get update
+	# 	echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | sudo debconf-set-selections
+	# 	sudo apt-get install -y oracle-java8-installer
+	# 	sudo apt-get install -y maven
+	# 	sudo apt install -y xvfb
+	# 	mvn clean package
+	# 	mv ./target/AppTier-1.0.0.jar ./darknet
+	# 	cd darknet
+	# 	Xvfb :1 & export DISPLAY=:1
+	# 	java -jar AppTier-1.0.0.jar > /dev/null &
+	# 	exit
+	# HERE
 	
-	echo "creating app instance AMI image..."
-	# app_instance_id=`aws ec2 describe-instances --filters Name=tag:Name,Values=$vs_app_instance_name Name=vpc-id,Values=$vpc_id --query 'Reservations[0].Instances[0].InstanceId' --output text`
+	# echo "########################################"
+	# echo "###### CREATING APP-TIER IMAGE #########"
+	# echo "########################################"
+	sleep 20 # TODO: needed?
+
+	app_instance_id=`aws ec2 describe-instances --filters Name=tag:Name,Values=$vs_app_instance_name Name=vpc-id,Values=$vpc_id --query 'Reservations[0].Instances[0].InstanceId' --output text`
 	app_instance_ami_id=`aws ec2 create-image --instance-id $app_instance_id --name $vs_app_instance_ami_name --no-reboot --query 'ImageId' --output text`
 	aws ec2 create-tags --resources $app_instance_ami_id --tags "Key=\"Name\",Value=\"$vs_app_instance_ami_name\""
 	echo "vs_app_instance_ami_id=$app_instance_ami_id" >> aws-resources.properties
 
 	mv aws-resources.properties ./WebTier/src/main/resources
 
-	echo "setting up web tier application..."
+	# echo "###################################"
+	# echo "###### DEPLOYING WEB-TIER #########"
+	# echo "###################################"
 	web_instance_ip=`aws ec2 describe-instances --filters Name=tag:Name,Values=$vs_web_instance_name Name=vpc-id,Values=$vpc_id --query 'Reservations[0].Instances[0].PublicIpAddress' --output text`
-	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ec2_setup.sh ubuntu@$web_instance_ip:~/
-	# scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./WebTier/pom.xml ubuntu@$web_instance_ip:~/
-	# scp -r -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./WebTier/src ubuntu@$web_instance_ip:~/
-	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip bash ec2_setup.sh 
-	# ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip mvn clean package > /dev/null
-
-
-elif [ "$1" == "run-project" ]; then
-
-	vpc_id=`aws ec2 describe-vpcs --filters Name=tag:Name,Values=$vs_vpc_name  --query 'Vpcs[0].VpcId' --output text`
-
-	app_instance_ip=`aws ec2 describe-instances --filters Name=tag:Name,Values=$vs_app_instance_name Name=vpc-id,Values=$vpc_id --query 'Reservations[0].Instances[0].PublicIpAddress' --output text`
-	# scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ec2_setup.sh ubuntu@$app_instance_ip:~/
-	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./AppTier/pom.xml ubuntu@$app_instance_ip:~/
-	scp -r -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./AppTier/src ubuntu@$app_instance_ip:~/
-	scp -r -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./AppTier/target/AppTier-1.0.0.jar ubuntu@$app_instance_ip:~/darknet/
-	# scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    darknet_test.py ubuntu@$app_instance_ip:~/darknet/
-	# scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    yolov3-tiny.weights ubuntu@$app_instance_ip:~/darknet/
-	echo "starting app tier application..."
-	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip bash ec2_setup.sh #> /dev/null
-	# ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip mvn clean package > /dev/null
-	# ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip mv ./target/AppTier-1.0.0.jar ./darknet > /dev/null
-	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip cd darknet
-	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$app_instance_ip java -jar AppTier-1.0.0.jar &
-	echo "Finished AppTier Installation"
-	#For successful AppTier installation
-	sleep 20
-
-
-
-
-	# echo "deploying web tier application..."
-	web_instance_ip=`aws ec2 describe-instances --filters Name=tag:Name,Values=$vs_web_instance_name Name=vpc-id,Values=$vpc_id --query 'Reservations[0].Instances[0].PublicIpAddress' --output text`
-	# scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ec2_setup.sh ubuntu@$web_instance_ip:~/
 	scp    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./WebTier/pom.xml ubuntu@$web_instance_ip:~/
 	scp -r -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    ./WebTier/src ubuntu@$web_instance_ip:~/
+	scp -r -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no    WebTier.sh ubuntu@$web_instance_ip:~/
 	echo "starting web tier application..."
-	# ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip bash ec2_setup.sh > /dev/null
-	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip mvn clean package > /dev/null
-	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip java -jar ./target/WebTier-1.0.0.jar & > /dev/null
-	echo "Finished WebTier Installation"
-	# echo "deploying app tier application..."
+	ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no -t ubuntu@$web_instance_ip bash WebTier.sh &
+	# ssh    -i ~/.ssh/$vs_key_pair_name.pem -o StrictHostKeyChecking=no ubuntu@$web_instance_ip <<-HERE
+	# 	sudo add-apt-repository -y ppa:webupd8team/java
+	# 	sudo apt-get update
+	# 	echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | sudo debconf-set-selections
+	# 	sudo apt-get install -y oracle-java8-installer
+	# 	sudo apt-get install -y maven
+	# 	mvn clean package
+	# 	mv ./target/WebTier-1.0.0.jar .
+	# 	java -jar WebTier-1.0.0.jar > /dev/null &
+	# 	exit
+	# HERE
 	
 
 elif [ "$1" == "destroy" ]; then
 	echo 'BREAKING DOWN THE INFRASTRUCTURE'
-
-	rm ./WebTier/src/main/resources/aws-resources.properties
 
 	app_instance_ami_id=`aws ec2 describe-images --filters Name=tag:Name,Values=$vs_app_instance_ami_name --query 'Images[0].ImageId' --output text`
 	ami_snapshot_id=`aws ec2 describe-images --filters Name=tag:Name,Values=$vs_app_instance_ami_name --query 'Images[0].BlockDeviceMappings[0].Ebs.SnapshotId' --output text`
@@ -260,16 +251,17 @@ elif [ "$1" == "destroy" ]; then
 	input_queue_url=`aws sqs get-queue-url --queue-name $vs_input_queue_name --query 'QueueUrl' --output text`
 	aws sqs delete-queue --queue-url $input_queue_url
 
+	# TODO: delete objects in bucket to successfully delete bucket
 	echo 'deleting S3 bucket...'
 	aws_region=`aws configure get region`
 	aws s3api delete-bucket --bucket $vs_s3_bucket_name --region $aws_region
 
 	echo "finalizing destruction..."
-	sleep 60
+	sleep 60 # TODO: needed?
 
-	
+
 else
 	echo "use \"create\" argument to create infrastructure"
-	echo "use \"run-project\" argument to  deploy the project"
+	echo "use \"deploy-project\" argument to  deploy the project"
 	echo "use \"destroy\" argument to destroy infrastructure"
 fi
